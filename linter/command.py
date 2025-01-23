@@ -1,6 +1,9 @@
 
 import maya.api.OpenMaya as om
 from linter.result_UI import ResultUI
+import linter.validators as validators
+import maya.cmds as cmds
+import re
 
 class MayaLinterCmd(om.MPxCommand):
     name = "linter"
@@ -20,4 +23,28 @@ class MayaLinterCmd(om.MPxCommand):
 
     def doIt(self, args):
         print(args)
-        ResultUI.openWindow()
+        #ResultUI.openWindow()
+        validationErrors = self.processFile()
+        print( validationErrors )
+        return validationErrors
+
+    node_validators = {
+        "mesh": [validators.nodeGeometryNaming],
+        "nurbsCurve": [validators.nodeCtrlNaming],
+        "joint": [validators.nodeJointNaming],
+        "camera" : [validators.nodeCameraNaming],
+        "reference": [validators.referenceFilePath], #validators.referencePrefixNaming, 
+        "PxrSurface": [validators.nodeMaterialNaming]
+    }
+
+    def processFile(self):
+        validationErrors = []
+        for nodeType in self.node_validators:
+            for node in cmds.ls(type=nodeType):
+                if(re.search(r':',node)): # Don't include referenced nodes
+                    continue
+                for validator in self.node_validators[nodeType]:
+                    result = validator(node)
+                    if not result is None:
+                        validationErrors.append(result)
+        return validationErrors

@@ -3,82 +3,66 @@ from enum import Enum
 from maya import cmds
 
 class ValidationError:
-    def __init__(self, elType, file, elName, issue):
-        self.file = file
+    def __init__(self, elType, elName, issue, notes = ""):
         self.elType = elType
         self.elName = elName
         self.issue = issue
+        self.notes = notes
     
     def __str__(self):
-        return (self.file + ": " + self.elName + " - " + self.issue)
+        return (self.elName + " - " + self.issue)
         
     def __repr__(self):
-        return (self.file + ": " + self.elName + " - " + self.issue)
+        return (self.elName + " - " + self.issue)
 
 class ElementType(Enum):
     FILE = 1
     NODE = 2
     CONFIG = 3
 
-def nodeGeometryNaming(file, meshNode):
+def nodeGeometryNaming(meshNode):
     transform = cmds.listRelatives(meshNode, parent=True)[0]
     if not re.search(r'.*_(SCULPT)?(GEO|PRXY)(_LOW|_HIGH)?(\d)*$', transform):
-        return ValidationError(ElementType.NODE, file, transform, "Geometry incorrectly named")
+        return ValidationError(ElementType.NODE, transform, "Geometry incorrectly named")
 
-def nodeCtrlNaming(file, ctrlNode):
+def nodeCtrlNaming(ctrlNode):
     transform = cmds.listRelatives(ctrlNode, parent=True)[0]
     if not re.search(r'.*(_L)?(_R)?_?.*_(CTRL|CRV)$', transform):
-        return ValidationError(ElementType.NODE, file, transform, "Control incorrectly named")
+        return ValidationError(ElementType.NODE, transform, "Control incorrectly named")
 
-def nodeJointNaming(file, jointNode):
+def nodeJointNaming(jointNode):
     if not re.search(r'.*(_L)?(_R)?_.*_JNT$', jointNode):
-        return ValidationError(ElementType.NODE, file, jointNode, "Joint incorrectly named")
+        return ValidationError(ElementType.NODE, jointNode, "Joint incorrectly named")
 
-def nodeCameraNaming(file, cameraNode):
+def nodeCameraNaming(cameraNode):
     transform = cmds.listRelatives(cameraNode, parent=True)[0]
     if not re.search(r'(persp|top|front|side|bottom|sh\d\d\d\d_shotCam.*)', transform):
-        return ValidationError(ElementType.NODE, file, transform, "Camera incorrectly named")
+        return ValidationError(ElementType.NODE, transform, "Camera incorrectly named")
 
-def referencePrefixNaming(file, referenceNode):
+def referencePrefixNaming(referenceNode):
     if (re.search(r'.*sharedReferenceNode.*',referenceNode) or referenceNode == "_UNKNOWN_REF_NODE_"):
         return
     try:
         namespace = cmds.referenceQuery(referenceNode, namespace=True)
         if not re.search(r'(:env|:rigA|:rigG|:rigL)', namespace):
-            return ValidationError(ElementType.NODE, file, namespace, "Reference incorrectly namespaced")
+            return ValidationError(ElementType.NODE, namespace, "Reference incorrectly namespaced")
     except RuntimeError:
-        return ValidationError(ElementType.NODE, file, referenceNode, "Reference crash!")
+        return ValidationError(ElementType.NODE, referenceNode, "Reference crash!")
 
-def referenceFilePath(file, referenceNode):
+def referenceFilePath(referenceNode):
     if (re.search(r'.*sharedReferenceNode.*',referenceNode) or referenceNode == "_UNKNOWN_REF_NODE_"):
         return
     try:
         filename = cmds.referenceQuery(referenceNode, filename=True)
         if not re.search(r'^P:', filename):
-            return ValidationError(ElementType.NODE, file, filename, "Reference not on P Drive")
+            return ValidationError(ElementType.NODE, filename, "Reference not on P Drive")
     except RuntimeError:
-        return ValidationError(ElementType.NODE, file, referenceNode, "Reference crash!")
+        return ValidationError(ElementType.NODE, referenceNode, "Reference crash!")
 
-def nodeMaterialNaming(file, materialNode):
+def nodeMaterialNaming(materialNode):
     if not re.search(r'.*_?.*_(TEX|MAT)$', materialNode):
-        return ValidationError(ElementType.NODE, file, materialNode, "Material incorrectly named")
+        return ValidationError(ElementType.NODE, materialNode, "Material incorrectly named")
 
-def mtoaIsDisabled(file):
+def mtoaIsDisabled():
     if cmds.pluginInfo("mtoa", query=True, loaded=True):
-        return ValidationError(ElementType.FILE, file, '', "Arnold Plugin is loaded")
-
-def fileNaming(file):
-    if(re.search(r'.*sh\d\d\d\d.*', file)): #shot pipeline
-        if not re.search(r'.*AWA_sh\d\d\d\d_(STB|LYT|ANIM|FX|LGT|CMP)_v\d\d\d_[A-Z]{2}[A-Z]?', file):
-            return ValidationError(ElementType.FILE, file, '', "File name does not follow Shot Pipeline naming conventions")
-    else: #asset pipeline
-        if not re.search(r'.*AWA_[A-Za-z]*_(PRXY|MDL|SRF|SCLP|CSCLP|SPT|RIG)_(v\d\d\d_[A-Z]{2}[A-Z]?|MASTER)', file):
-            return ValidationError(ElementType.FILE, file, '', "File name does not follow Asset Pipeline naming conventions")
-
-
-def fileNoNoArnolds(file):
-    if(re.search(r'.*noArnold.*', file)): 
-        return ValidationError(ElementType.FILE, file, '', "File has a '-noArnold' extension")
-
-#    elif re.search(r'Pxr.*Light', nodeType ) and not re.search(r'.*_.*_pxr.*Light(\d)*$', transform):
-#        print("X " + transform + " (" + nodeType + ") does not meet light naming convention.")
+        return ValidationError(ElementType.FILE, '', "Arnold Plugin is loaded")

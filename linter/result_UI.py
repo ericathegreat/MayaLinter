@@ -27,10 +27,10 @@ class ResultUI(QtWidgets.QWidget):
         # set initial window size
         self.resize(300, 800)      
         # locate UI widgets
-        self.btn_scan = self.widget.findChild(QtWidgets.QPushButton, 'btn_scan')                 
+        self.btn_scan = self.widget.findChild(QtWidgets.QPushButton, 'btn_scan')      
+        self.tree_scanResults = self.widget.findChild(QtWidgets.QTreeView, 'tree_scanResults')           
         # assign functionality to buttons
         self.btn_scan.clicked.connect(self.scan)
-        #self.linterCore = MayaLinterCore()
     
     
     def scan(self):
