@@ -27,10 +27,10 @@ class MayaLinterCmd(om.MPxCommand):
         validationErrors = self.processFile()
 
         if (argData.isFlagSet("-ui") and argData.flagArgumentBool("-ui",0)):
+            ResultUI.setData(validationErrors)
             ResultUI.openWindow()
 
-        print( validationErrors )
-        return validationErrors
+        self.setResult(self.errorsToStringArray(validationErrors))
 
     node_validators = {
         "mesh": [validators.nodeGeometryNaming],
@@ -52,3 +52,9 @@ class MayaLinterCmd(om.MPxCommand):
                     if not result is None:
                         validationErrors.append(result)
         return validationErrors
+    
+    def errorsToStringArray(self, errorList):
+        result = []
+        for error in errorList:
+            result.append (error.elName + ": " + error.issue)
+        return result
