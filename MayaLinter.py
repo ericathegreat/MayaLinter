@@ -14,7 +14,7 @@ def maya_useNewAPI():
 def initializePlugin( obj ):
     plugin = om.MFnPlugin(obj)
     try:
-        plugin.registerCommand( MayaLinterCmd.name, MayaLinterCmd.cmdCreator) 
+        plugin.registerCommand( MayaLinterCmd.name, MayaLinterCmd.cmdCreator, MayaLinterCmd.createSyntax) 
         print ("Registered")
     except:
         sys.stderr.write(

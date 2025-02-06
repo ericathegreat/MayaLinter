@@ -19,12 +19,16 @@ class MayaLinterCmd(om.MPxCommand):
     def createSyntax():
         """Creates the MEL syntax"""
         syntax = om.MSyntax()
+        syntax.addFlag("-ui", "-showUI", om.MSyntax.kBoolean)
         return syntax
 
     def doIt(self, args):
-        print(args)
-        #ResultUI.openWindow()
+        argData = om.MArgDatabase(self.syntax(), args)
         validationErrors = self.processFile()
+
+        if (argData.isFlagSet("-ui") and argData.flagArgumentBool("-ui",0)):
+            ResultUI.openWindow()
+
         print( validationErrors )
         return validationErrors
 
@@ -34,7 +38,7 @@ class MayaLinterCmd(om.MPxCommand):
         "joint": [validators.nodeJointNaming],
         "camera" : [validators.nodeCameraNaming],
         "reference": [validators.referenceFilePath], #validators.referencePrefixNaming, 
-        "PxrSurface": [validators.nodeMaterialNaming]
+        #"PxrSurface": [validators.nodeMaterialNaming]
     }
 
     def processFile(self):

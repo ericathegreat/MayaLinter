@@ -1,0 +1,16 @@
+#import sys
+#sys.path.append('C:/Users/User/Documents/mayaDev/linter')
+
+
+import maya.cmds as cmds
+cmds.unloadPlugin("MayaLinter")
+cmds.loadPlugin("MayaLinter")
+
+import linter
+import importlib
+importlib.reload(linter.command)
+importlib.reload(linter.result_UI)
+importlib.reload(linter.validators)
+cmds.linter(ui = True)
+
+
